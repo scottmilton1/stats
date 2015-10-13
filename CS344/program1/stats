@@ -99,7 +99,7 @@ then
     half='0.5'
     # found help here:
     # stackoverflow.com/questions/2683064/float-conditional-in-bash 
-    if [[ $(echo "if (${fraction} < ${half}) 1 else 0" | bc) -eq 1 ]] 
+    if [[ $(echo "if (${fqraction} < ${half}) 1 else 0" | bc) -eq 1 ]] 
     then
       avg=$floor
     else
@@ -130,12 +130,19 @@ then
       sum=`expr $sum + $num`
       lineCount=`expr $lineCount + 1`
     done < $FILE
-    #echo "sum=$sum"
-    avg=$((($sum+$lineCount/2)/$lineCount)) 
-    #quotient="$sum / $count"
-    #avg=$(echo $((sum / count)) | xargs printf "%.*f\n" 1)
-    #avg=$(echo "$sum / $count" | xargs printf "%.*f\n" 2)
-   echo "$avg" 
+    #avg=$((($sum+$lineCount/2)/$lineCount)) 
+    base=$(($sum/$lineCount))
+    #base=`expr $sum / $lineCount`
+    #fraction=`expr $sum \* 10 / $lineCount - $base \* 10`
+    fraction=$((($sum*10)/$lineCount-($base*10))) 
+    ((avg = $fraction >= 5 ? $base + 1 : $base))  
+    #if [[ $fraction -ge 5 ]]
+    #then
+    #  avg=`expr $base + 1`
+    #else
+    #  avg=$base
+    #fi  
+    echo "$avg" 
   done
 
   printf 'Medians:\n'
