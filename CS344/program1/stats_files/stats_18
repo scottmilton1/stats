@@ -1,0 +1,133 @@
+#!/bin/sh
+#
+# Name:        Program 1 - stats
+# Author:      Scott Milton
+# Date:        10/19/15
+# Description: This shell script will calculate averages and medians from an
+#              an input file of numbers or from standard input. The script
+#              accepts command line arguments, validates them for correctness,
+#              and calculates the statistics across rows or columns based on 
+#              the command line instructions.
+#
+# general format for command is
+# stats {-rows | cols} [input_file]
+
+
+
+# PROBS 
+# need to push ctrl-d twice after inputting numbers. why?
+# type check for integers - validate input
+
+
+valid=1
+option=${1:0:2} # first two character of first command-line argument
+
+# validate args and disqualify anything invalid
+# case: command has too few or too many args
+if [[ "$#" -lt 1 || "$#" -gt 2 ]]
+then
+  valid=0 
+
+# case: first command is not string that begins with lower case '-c' or '-r'
+elif [[ $option != '-c' && $option != '-r' ]]
+then 
+  valid=0
+
+# case: second argument is switch (begins with dash), not filename
+elif [[ "$#" -eq 2 && ${2:0:1} = '-' ]]
+then
+  valid=0
+fi
+
+# if args were invalid, send error message to standard error and exit
+if [ $valid == 0 ]
+then
+  echo 'Usage: stats {-rows|-cols} [file]' >&2
+  exit 1
+fi
+
+# get process id for this program
+# TMP=ps$$
+
+# set up trap to catch interrupt, hangup, and terminate signals and remove
+# the temp file if program terminates unexpectedly
+trap "rm -f $TMP_$$; exit 1" INT HUP TERM
+
+# if file name given store it in variable in preparation for reading data  
+if [[ "$#" -eq 2 ]]
+then
+  FILE=$2
+
+# otherwise prompt user for input
+else
+  echo -e '\nEnter any number of integers separated by spaces.'
+  echo -e '\nEnd each line of integers with a carriage return.' 
+  echo -e '\nPush <ctrl> + d when finished.'
+
+  # store user input in temp file with process id in name
+  FILE=TMP_$$ 
+  cat > $FILE
+fi
+
+# calculate the number of terms in the first row and store in variable
+# we can assume that all rows have the same number of terms 
+read line<$FILE
+echo -e "\nword count for the first line is: "
+count=$(echo "$line" | wc -w)
+
+echo "count=$count"
+
+# determine which option user selected (rows or columns and process accordingly
+if [ $option == '-r' ]
+then
+  printf '\nAverage Median\n'
+
+  i=0
+  # count=0
+  sum=0 
+  while read -a line # could try head or cut here instead. might not need offset
+ 		  # with one of both of those
+  do
+    # i=`expr $i + 1` # start at i=1
+  
+    # store line in a temp file then read it into array
+    # read -a numArray < line
+      
+    for num in "${line[@]}"
+    do
+      echo "$num"
+      sum=`expr $sum + $num`
+      # count=`expr $count + 1`  
+    done
+    echo "end line"
+    echo "sum = $sum"
+    avg=`expr $sum / $count`
+    echo "avg = $avg"
+    sum=0
+    # count=0
+
+    # sum=`expr $sum + $num`
+    # if [[ "$i" -eq "$count" ]] 
+    # then
+    #  echo "$sum"
+    #  sum=0
+    #  i=0
+    # fi
+  done < $FILE
+
+elif [ $option = '-c' ]
+then
+  printf '\nAverages:\n'
+  printf 'Medians:\n'
+  
+  while read num
+  do
+    echo "$num"
+  done < $FILE
+fi
+
+printf '\n'
+
+# remove the temp file and exit normally
+rm -f $TMP_$$
+exit 0

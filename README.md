@@ -1,0 +1,3 @@
+
+This is a simple shell script that reads input from a file or from standard
+input. More details forthcoming...

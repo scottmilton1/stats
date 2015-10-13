@@ -1,0 +1,133 @@
+#!/bin/sh
+#
+# Name:        Program 1 - stats
+# Author:      Scott Milton
+# Date:        10/19/15
+# Description: This shell script will calculate averages and medians from an
+#              an input file of numbers or from standard input. The script
+#              accepts command line arguments, validates them for correctness,
+#              and calculates the statistics across rows or columns based on 
+#              the command line instructions.
+#
+# general format for command is
+# stats {-rows | cols} [input_file]
+
+
+
+# PROBS 
+# need to push ctrl-d twice after inputting numbers. why?
+# type check for integers - validate input - does BASH have typeof()???
+
+
+valid=1
+option=${1:0:2} # first two character of first command-line argument
+
+# validate args and disqualify anything invalid
+# case: command has too few or too many args
+if [[ "$#" -lt 1 || "$#" -gt 2 ]]
+then
+  valid=0 
+
+# case: first arg is not string that begins with lower case '-c' or '-r'
+elif [[ $option != '-c' && $option != '-r' ]]
+then 
+  valid=0
+
+# case: second argument is switch (begins with dash), not filename
+# technically, filename could begin with a dash, but generally not done
+elif [[ "$#" -eq 2 && ${2:0:1} = '-' ]]
+then
+  valid=0
+fi
+
+# if args were invalid, send error message to standard error and exit
+if [ $valid == 0 ]
+then
+  echo 'Usage: stats {-rows|-cols} [file]' >&2
+  exit 1
+fi
+
+# get process id for this program
+# TMP=ps$$
+
+# set up trap to catch interrupt, hangup, and terminate signals and remove
+# the temp file if program terminates unexpectedly
+trap "rm -f $TMP_$$; exit 1" INT HUP TERM
+
+# if file name given store it in variable in preparation for reading data  
+if [[ "$#" -eq 2 ]]
+then
+  FILE=$2
+
+# otherwise prompt user for input
+else
+  echo -e '\nEnter any number of integers separated by spaces.'
+  echo -e '\nEnd each line of integers with a carriage return.' 
+  echo -e '\nPush <ctrl> + d when finished.'
+
+  # store user input in temp file with process id in name
+  FILE=TMP_$$ 
+  cat > $FILE
+fi
+
+# calculate the number of terms in the first row and store in variable
+# for assignment, we can assume that all rows have the same number of terms 
+read line<$FILE
+count=$(echo "$line" | wc -w)
+
+# determine which option user selected (rows or columns + process accordingly
+if [ $option == '-r' ]
+then
+  printf '\nAverage Median\n'
+
+  i=0
+  sum=0
+  str=$(echo -e "\n") 
+  while read -a line
+  do        
+    # calculate and display average (mean)
+    for num in "${line[@]}"
+    do
+      sum=`expr $sum + $num`
+      
+      # build string version of line for median below
+      str=$(echo -e "$num\n$str")
+    done
+    avg=$(echo "$sum / $count" | bc -l)
+    floor=`expr $sum / $count`
+    fraction=$(echo "$avg - $floor" | bc -l)
+    half='0.5'
+    # found help here:
+    # stackoverflow.com/questions/2683064/float-conditional-in-bash 
+    if [[ $(echo "if (${fraction} < ${half}) 1 else 0" | bc) -eq 1 ]] 
+    then
+      avg=$floor
+    else
+      avg=`expr $floor + 1`
+    fi
+    sum=0
+ 
+    # calculate and display median
+    firstHalf=`expr $count / 2 + 1`
+    med=$(echo "$str" | sort -n | cut -d$'\n' -f ${firstHalf}- | head -1)
+    echo -e "$avg\t$med"  
+    str=""
+  done < $FILE
+
+
+elif [ $option = '-c' ]
+then
+  printf '\nAverages:\n'
+  printf 'Medians:\n'
+  
+  while read -a line
+  do
+    echo "$line"
+  done < $FILE
+fi
+
+printf '\n'
+
+# remove the temp file and exit normally
+rm -f $TMP_$$
+exit 0
