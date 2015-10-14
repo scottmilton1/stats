@@ -141,22 +141,22 @@ then
     else
       avg=$base
     fi  
-    echo "$avg" 
+    echo -ne "$avg\t" 
   done
  
   # calculate and display median
-  printf 'Medians:\n'
+  printf '\nMedians:\n'
   firstHalf=`expr $lineCount / 2 + 1`
   for ((i=0; i<${count}; i++)); # get the ith column stored in array 
   do
     str="${arr[$i]}"
     # med=$(echo "$str")
     med=$(echo "$str" | sort -n | cut -d$'\n' -f ${firstHalf}- | head -1)
-    echo -e "$med\t"  
+    echo -ne "$med\t"  
   done
 fi
 
-printf '\n'
+printf '\n\n'
 
 # remove the temp file and exit normally
 rm -f $TMP_$$
