@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Name:        Program 1 - stats
+# Name:        stats
 # Author:      Scott Milton
 # Date:        10/19/15
 # Description: This shell script will calculate averages and medians from an
